@@ -1,0 +1,22 @@
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+body {
+  font-family: 'Courier New';
+  color: #FFFFFF;
+}
+
+p {
+  position: fixed;
+  top: 10;
+  left: 25;
+}
+
+h5 {
+  position: fixed;
+  top: 95%;
+  left: 95%;
+}
