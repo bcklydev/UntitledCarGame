@@ -6,10 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Untitled Car Game</title>
   </head>
-  <body>
+  <body oncontextmenu="false;">
     <canvas id="game"></canvas>
-    <h5>v0.0.2</h5>
-    <p>Use 'a' and 'd' keys to move.</p>
+    <p id="score">0</p>
+    <p id="desktopControls">Use 'a' and 'd' keys to move.</p>
+    <p id="instructions">Collect flags to score points.</p>
+    <p id="version">v0.0.3</p>
+    <div id="mobileControls">
+      <div id="left">&#8592;</div>
+      <div id="right">&#8594;</div>
+    </div>
     <script type="module" src="/main.js"></script>
   </body>
 </html>

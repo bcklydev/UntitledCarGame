@@ -2,6 +2,7 @@ import './style.css'
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { RingBufferGeometry } from 'three';
 
 
 //Creating the scene, camera and renderer
@@ -12,7 +13,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-camera.position.setZ(10);
+camera.position.setZ(5);
 camera.position.setY(2);
 
 //User Input
@@ -40,8 +41,25 @@ function keyUpHandler(e) {
   }
 }
 
+//Mobile touchscreen
+document.getElementById("left").addEventListener('touchstart', () => {
+  direction = "left"
+})
+
+document.getElementById("left").addEventListener('touchend', () => {
+  direction = "forward"
+})
+
+document.getElementById("right").addEventListener('touchstart', () => {
+  direction = "right"
+})
+
+document.getElementById("right").addEventListener('touchend', () => {
+  direction = "forward"
+})
+
 //Background
-const backgroundColour = new THREE.Color(0x333333);
+const backgroundColour = new THREE.Color(0xfbfbfc);
 scene.background = backgroundColour;
 
 //Lights
@@ -67,7 +85,6 @@ const models = [
   "./suvLuxury.glb",
   "./taxi.glb",
   "./tractor.glb",
-  "./tractorPolice.glb",
   "./tractorShovel.glb",
   "./truck.glb",
   "./truckFlat.glb",
@@ -75,38 +92,108 @@ const models = [
 ]
 let modelPath = models[Math.floor(Math.random() * models.length)];
 
-//Load 3D objects
+
+//Loading manager
+const manager = new THREE.LoadingManager();
+manager
+
 const loader = new GLTFLoader();
+let loaded = 0;
 let vehicle;
-let loaded = false;
+const vehicleBoundingBox = new THREE.Box3(); 
 
 loader.load( modelPath, function ( gltf ) {
-	scene.add( gltf.scene );
-  vehicle = gltf.scene;
-  vehicle.rotation.y = 2;
-  vehicle.rotation.x = 0.1;
-  loaded = true;
+  vehicle = gltf.scene
+  scene.add(vehicle)
+  loaded++;
+  if(loaded > 2) {
+    animate()
+  }
 }, undefined, function ( error ) {
 	console.error( error );
 } );
+
+let flag
+const flagBoundingBox = new THREE.Box3()
+
+// const box3HelperFlag = new THREE.Box3Helper(flagBoundingBox, 0x00ffff)
+// scene.add(box3HelperFlag)
+
+loader.load( "./flag.glb", function ( gltf ) {
+  flag = gltf.scene;
+  scene.add(flag);
+  flag.position.set((Math.floor((Math.random() * 10) + 1)), 0, (Math.floor((Math.random() * 10) + 1)))
+  flagBoundingBox.setFromObject(flag)
+  loaded++;
+  if(loaded > 2) {
+    animate()
+  }
+}, undefined, function ( error ) {
+	console.error( error );
+} );
+
+const ring = new THREE.Mesh(
+  new THREE.RingGeometry(0.8, 1, 32),
+  new THREE.MeshBasicMaterial( { color: 0xe04644 } )
+)
+scene.add(ring)
+ring.rotation.x = -(Math.PI / 2)
+
+// const arrow = new THREE.Mesh(
+//   new THREE.ConeGeometry( 0.1, 0.75, 32 ),
+//   new THREE.MeshBasicMaterial( {color: 0xffcf12} )
+// )
+// scene.add(arrow)
+// arrow.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(Math.PI / 2))
+
+let arrow
+loader.load( "./arrow.glb", function ( gltf ) {
+  arrow = gltf.scene;
+  scene.add(arrow);
+  //arrow.applyMatrix(new THREE.Matrix4().makeRotationX(Math.PI / 2))
+  loaded++;
+  if(loaded > 2) {
+    animate()
+  }
+}, undefined, function ( error ) {
+	console.error( error );
+} );
+
+let score = 0
 
 
 //Animate the scene
 function animate() {
   requestAnimationFrame(animate);
 
-  if(loaded) {
-    if(direction == "left") {
-      vehicle.rotation.y += 0.05;
-    }
-    else if(direction == "right") {
-      vehicle.rotation.y -= 0.05;
-    }
+  vehicleBoundingBox.setFromObject(vehicle)
+  //vehicleBoundingBox.expandByScalar(-0.5)
+  if(direction == "left") {
+    vehicle.rotation.y += 0.05;
+  }
+  else if(direction == "right") {
+    vehicle.rotation.y -= 0.05;
+  }
 
-    vehicle.translateZ(-speed);
+  ring.position.x = flag.position.x
+  ring.position.z = flag.position.z
+
+  arrow.lookAt(flag.position.x, flag.position.y, flag.position.z)
+  arrow.position.set(vehicle.position.x, vehicle.position.y, vehicle.position.z)
+
+  vehicle.translateZ(-speed);
+  camera.lookAt(vehicle.position.x, vehicle.position.y, vehicle.position.z)
+
+  if(vehicleBoundingBox.intersectsBox(flagBoundingBox)) {
+    flag.position.set((Math.floor((Math.random() * 50) + 1) - 25), 0, (Math.floor((Math.random() * 50) + 1)-25))
+    flagBoundingBox.setFromObject(flag)
+    score++
+    if(score > 3) {
+      document.getElementById("instructions").style.display = 'none';
+    }
+    document.getElementById("score").innerText = score
+    speed = speed + 0.01
   }
 
   renderer.render(scene, camera);
 }
-
-animate();
